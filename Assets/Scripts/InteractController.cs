@@ -9,7 +9,7 @@ public class InteractController : MonoBehaviour
     [SerializeField] private float reach = 100;
     
     private Interactable heldItem = null;
-    
+    private Interactable highlighted = null;
     
     void Start()
     {
@@ -34,12 +34,26 @@ public class InteractController : MonoBehaviour
                 Interactable interactable = hit.transform.GetComponentInParent<Interactable>();
                 if (interactable)
                 {
+                    if (interactable != highlighted)
+                    {
+                        ClearHighlighted();
+                        SetHighlighted(interactable);
+                    }
+                    
                     if (Input.GetButtonDown("Use_Primary") && interactable.CanBePickedUp)
                     {
                         PickUpItem(interactable);
                     } 
                     interactedWithItem = interactable;
                 }
+                else
+                {
+                    // TODO refactor whole update method
+                    ClearHighlighted();
+                }
+            } else if (highlighted)
+            {
+                ClearHighlighted();
             }
         }
 
@@ -73,6 +87,19 @@ public class InteractController : MonoBehaviour
             }
         }
 
+    }
+
+    private void SetHighlighted(Interactable interactable)
+    {
+        highlighted = interactable;
+        highlighted.outline.enabled = true;
+    }
+
+    private void ClearHighlighted()
+    {
+        if (!highlighted) { return; }
+        highlighted.outline.enabled = false;
+        highlighted = null;
     }
 
     private void DropItem()
