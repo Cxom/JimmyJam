@@ -6275,7 +6275,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 62f13b494521b674491bf4eb243be367, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.19999959
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 62f13b494521b674491bf4eb243be367, type: 3}
       propertyPath: m_LocalPosition.z
@@ -7063,7 +7063,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 62f13b494521b674491bf4eb243be367, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.19999981
+      value: 0.1
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 62f13b494521b674491bf4eb243be367, type: 3}
       propertyPath: m_LocalPosition.z
@@ -7487,7 +7487,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1765499731}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PlayerHand
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7520,7 +7520,7 @@ GameObject:
   - component: {fileID: 1979222397}
   - component: {fileID: 1979222396}
   - component: {fileID: 1979222395}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Capsule
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7616,6 +7616,14 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 6526632516643132701, guid: c2dc14f109b09a743b03757ef68006c7, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 7085721663646366572, guid: c2dc14f109b09a743b03757ef68006c7, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     - target: {fileID: 7085721664118310500, guid: c2dc14f109b09a743b03757ef68006c7, type: 3}
       propertyPath: m_RootOrder
       value: 8
@@ -7663,6 +7671,10 @@ PrefabInstance:
     - target: {fileID: 7085721664118310506, guid: c2dc14f109b09a743b03757ef68006c7, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 7085721664118310506, guid: c2dc14f109b09a743b03757ef68006c7, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c2dc14f109b09a743b03757ef68006c7, type: 3}

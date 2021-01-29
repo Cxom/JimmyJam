@@ -26,9 +26,10 @@ public class InteractController : MonoBehaviour
         var interactedWithItem = heldItem;
         if (!heldItem)
         {
-            Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0.5f));
+            LayerMask layerMask = LayerMask.NameToLayer("Player");
+            Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
-            if (Physics.Raycast(ray, out RaycastHit hit, reach))
+            if (Physics.Raycast(ray, out RaycastHit hit, reach, layerMask))
             {
                 // TODO use tags for this not recursive component searching
                 Interactable interactable = hit.transform.GetComponentInParent<Interactable>();
