@@ -7,8 +7,10 @@ public class LeafBlower : Interactable
 
     private ParticleSystem _particleSystem;
     
-    private void Start()
+    private new void Start()
     {
+        base.Start();
+     
         _particleSystem = GetComponent<ParticleSystem>();
         _particleSystem.Stop();
     }

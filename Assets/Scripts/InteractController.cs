@@ -5,6 +5,7 @@ using UnityEngine;
 public class InteractController : MonoBehaviour
 {
     [SerializeField] private Transform playerHand;
+    [SerializeField] private Transform droppedItemsParent;
     [SerializeField] private float reach = 100;
     
     private Interactable heldItem = null;
@@ -17,6 +18,11 @@ public class InteractController : MonoBehaviour
 
     void Update()
     {
+        if (heldItem && Input.GetButtonDown("Drop"))
+        {
+            DropItem();
+        }
+
         var interactedWithItem = heldItem;
         if (!heldItem)
         {
@@ -68,13 +74,23 @@ public class InteractController : MonoBehaviour
         }
 
     }
-    
+
+    private void DropItem()
+    {
+        heldItem.transform.SetParent(droppedItemsParent);
+        heldItem.Rigidbody.isKinematic = false;
+        heldItem.RestoreLocalScale();
+        heldItem.Toss(playerHand);
+        heldItem = null;
+    }
+
     private void PickUpItem(Interactable interactable)
     {
         heldItem = interactable;
+        interactable.Rigidbody.isKinematic = true;
         interactable.transform.SetParent(playerHand);
-        interactable.transform.position = interactable.offset;
-        interactable.transform.rotation = Quaternion.Euler(interactable.rotation);
+        interactable.transform.localPosition = interactable.offset;
+        interactable.transform.localRotation = Quaternion.Euler(interactable.rotation);
         interactable.transform.localScale = interactable.scale;
     }
 }

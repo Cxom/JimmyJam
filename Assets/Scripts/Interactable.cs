@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,6 +13,15 @@ public abstract class Interactable : MonoBehaviour
     [SerializeField] public Vector3 offset = Vector3.zero;
     [SerializeField] public Vector3 rotation = Vector3.zero;
     [SerializeField] public Vector3 scale = new Vector3(1, 1, 1);
+
+    private Vector3 originalScale;
+    public Rigidbody Rigidbody { get; protected set; }
+
+    protected void Start()
+    {
+        originalScale = transform.localScale;
+        Rigidbody = GetComponent<Rigidbody>();
+    }
 
     public virtual void PrimaryDown()
     {
@@ -33,7 +43,7 @@ public abstract class Interactable : MonoBehaviour
         
     }
     
-    public virtual  void SecondaryHold()
+    public virtual void SecondaryHold()
     {
         
     }
@@ -42,5 +52,14 @@ public abstract class Interactable : MonoBehaviour
     {
         
     }
+
+    public void RestoreLocalScale()
+    {
+        transform.localScale = originalScale;
+    }
     
+    public void Toss(Transform playerHand)
+    {
+        
+    }
 }
