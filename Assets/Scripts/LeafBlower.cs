@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -24,5 +25,5 @@ public class LeafBlower : Interactable
     {
         _particleSystem.Stop();
     }
-    
+
 }
