@@ -26,13 +26,13 @@ public class InteractController : MonoBehaviour
         var interactedWithItem = heldItem;
         if (!heldItem)
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0.5f));
 
             if (Physics.Raycast(ray, out RaycastHit hit, reach))
             {
                 // TODO use tags for this not recursive component searching
                 Interactable interactable = hit.transform.GetComponentInParent<Interactable>();
-                if (interactable)
+                if (interactable && hit.distance <= interactable.activationRange)
                 {
                     if (interactable != highlighted)
                     {

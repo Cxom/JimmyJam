@@ -8,7 +8,8 @@ public abstract class Interactable : MonoBehaviour
 {
     [SerializeField] private bool canBePickedUp;
     public bool CanBePickedUp => canBePickedUp;
-
+    [SerializeField] public float activationRange = 5f;
+    
     [Header("Relative Transform When In Hand")]
 
     [SerializeField] public Vector3 offset = Vector3.zero;
