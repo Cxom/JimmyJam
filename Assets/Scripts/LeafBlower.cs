@@ -2,12 +2,17 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class LeafBlower : Interactable
 {
-
-    private ParticleSystem _particleSystem;
+    [SerializeField] private Transform blowerDirection;
+    [SerializeField] private float airVelocity;
+    [SerializeField] private GameObject[] airParticles;
     
+    private ParticleSystem _particleSystem;
+    private bool blowing;
+
     private new void Start()
     {
         base.Start();
@@ -18,12 +23,18 @@ public class LeafBlower : Interactable
 
     public override void PrimaryDown()
     {
-        _particleSystem.Play();
+        blowing = true;
+    }
+
+    public override void PrimaryHold()
+    {
+        GameObject airParticle = airParticles[Random.Range(0, airParticles.Length - 1)];
+        Instantiate(airParticle, blowerDirection.position, Random.rotationUniform);
+        airParticle.GetComponent<Rigidbody>().velocity = airVelocity * blowerDirection.forward;
     }
 
     public override void PrimaryUp()
     {
-        _particleSystem.Stop();
+        blowing = false;
     }
-
 }

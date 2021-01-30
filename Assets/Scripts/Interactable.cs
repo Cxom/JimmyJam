@@ -1,7 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using cakeslice;
 using UnityEngine;
 
 public abstract class Interactable : MonoBehaviour
