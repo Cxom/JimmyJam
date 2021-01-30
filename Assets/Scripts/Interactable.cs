@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public abstract class Interactable : MonoBehaviour
+public class Interactable : MonoBehaviour
 {
     [SerializeField] private bool canBePickedUp;
     public bool CanBePickedUp => canBePickedUp;
