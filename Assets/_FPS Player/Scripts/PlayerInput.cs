@@ -33,6 +33,14 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
+    public float elevate
+    {
+        get
+        {
+            return Input.GetAxis("Elevate");
+        }
+    }
+
     public bool run
     {
         get { return Input.GetKey(KeyCode.LeftShift); }
@@ -47,6 +55,42 @@ public class PlayerInput : MonoBehaviour
     {
         get { return Input.GetKey(KeyCode.C); }
     }
+
+    public KeyCode interactKey
+    { 
+        get { return KeyCode.E; }
+    }
+
+    public bool interact
+    {
+        get { return Input.GetKeyDown(interactKey); }
+    }
+
+    public bool reload
+    {
+        get { return Input.GetKeyDown(KeyCode.R); }
+    }
+
+    public bool aim
+    {
+        get { return Input.GetMouseButtonDown(1); }
+    }
+
+    public bool aiming
+    {
+        get { return Input.GetMouseButton(1); }
+    }
+
+    public bool shooting
+    {
+        get { return Input.GetMouseButton(0); }
+    }
+
+    public float mouseScroll
+    { 
+        get { return Input.GetAxisRaw("Mouse ScrollWheel"); }
+    }
+
 
     private Vector2 previous;
     private Vector2 _down;
