@@ -1,63 +1,101 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
-public enum Status { idle, moving, crouching, sliding, climbingLadder, wallRunning, grabbedLedge, climbingLedge, vaulting }
-
+public enum Status { idle, walking, crouching, sprinting, sliding, climbingLadder, wallRunning, vaulting, grabbedLedge, climbingLedge, surfaceSwimming, underwaterSwimming }
+public class StatusEvent : UnityEvent<Status, Func<IKData>> { }
+[RequireComponent(typeof(PlayerInput))]
+[RequireComponent(typeof(PlayerMovement))]
 public class PlayerController : MonoBehaviour
 {
     public Status status;
+    public LayerMask collisionLayer; //Default
+    public float crouchHeight = 1f;
+    public PlayerInfo info;
     [SerializeField]
-    private LayerMask vaultLayer;
+    private float sprintTime = 6f;
     [SerializeField]
-    private LayerMask ledgeLayer;
+    private float sprintReserve = 4f;
     [SerializeField]
-    private LayerMask ladderLayer;
-    [SerializeField]
-    private LayerMask wallrunLayer;
+    private float sprintMinimum = 2f;
 
-    GameObject vaultHelper;
-
-    Vector3 wallNormal = Vector3.zero;
-    Vector3 ladderNormal = Vector3.zero;
-    Vector3 pushFrom;
-    Vector3 slideDir;
-    Vector3 vaultOver;
-    Vector3 vaultDir;
-
+    new CameraMovement camera;
     PlayerMovement movement;
     PlayerInput playerInput;
     AnimateLean animateLean;
+    AnimateCameraLevel animateCamLevel;
 
     bool canInteract;
-    bool canGrabLedge;
-    bool controlledSlide;
+    bool forceSprintReserve = false;
+    
+    float crouchCamAdjust;
+    float stamina;
 
-    float rayDistance;
-    float slideLimit;
-    float slideTime;
-    float radius;
-    float height;
-    float halfradius;
-    float halfheight;
+    public StatusEvent onStatusChange;
+    List<MovementType> movements;
+    WallrunMovement wallrun;
+    SurfaceSwimmingMovement swimming;
 
-    int wallDir = 1;
+    public void ChangeStatus(Status s)
+    {
+        if (status == s) return;
+        status = s;
+        if (onStatusChange != null)
+            onStatusChange.Invoke(status, null);
+    }
+    public void ChangeStatus(Status s, Func<IKData> call)
+    {
+        if (status == s) return;
+        status = s;
+        if (onStatusChange != null)
+            onStatusChange.Invoke(status, call);
+    }
+
+    public void AddToStatusChange(UnityAction<Status, Func<IKData>> action)
+    {
+        if(onStatusChange == null)
+            onStatusChange = new StatusEvent();
+
+        onStatusChange.AddListener(action);
+    }
+
+    public void AddMovementType(MovementType move)
+    {
+        if (movements == null) movements = new List<MovementType>();
+        move.SetPlayerComponents(movement, playerInput);
+
+        if ((move as WallrunMovement) != null) //If this move type is a Wallrunning
+            wallrun = (move as WallrunMovement);
+        else if ((move as SurfaceSwimmingMovement) != null) //If this move type is a Surface Swimming
+            swimming = (move as SurfaceSwimmingMovement);
+
+        movements.Add(move);
+    }
+
+    public SurfaceSwimmingMovement GetSwimmingMovement()
+    {
+        return swimming;
+    }
 
     private void Start()
     {
-        CreateVaultHelper();
         playerInput = GetComponent<PlayerInput>();
+
         movement = GetComponent<PlayerMovement>();
+        movement.AddToReset(() => { status = Status.walking; });
+
+        camera = GetComponentInChildren<CameraMovement>();
 
         if (GetComponentInChildren<AnimateLean>())
             animateLean = GetComponentInChildren<AnimateLean>();
+        if (GetComponentInChildren<AnimateCameraLevel>())
+            animateCamLevel = GetComponentInChildren<AnimateCameraLevel>();
 
-        slideLimit = movement.controller.slopeLimit - .1f;
-        radius = movement.controller.radius;
-        height = movement.controller.height;
-        halfradius = radius / 2f;
-        halfheight = height / 2f;
-        rayDistance = halfheight + radius + .1f;
+        info = new PlayerInfo(movement.controller.radius, movement.controller.height);
+        crouchCamAdjust = (crouchHeight - info.height) / 2f;
+        stamina = sprintTime;
     }
 
     /******************************* UPDATE ******************************/
@@ -67,39 +105,68 @@ public class PlayerController : MonoBehaviour
         UpdateInteraction();
         UpdateMovingStatus();
 
-
-        //Check for movement updates
-        CheckSliding();
+        //Checks
         CheckCrouching();
-        CheckForWallrun();
-        CheckLadderClimbing();
-        UpdateLedgeGrabbing();
-        CheckForVault();
-        //Add new check to change status right here
+        foreach (MovementType moveType in movements)
+        {
+            if(moveType.enabled)
+                moveType.Check(canInteract);
+        }
 
         //Misc
         UpdateLean();
+        UpdateCamLevel();
     }
 
     void UpdateInteraction()
     {
-        if (!canInteract)
+        if ((int)status >= 5)
+            canInteract = false;
+        else if (!canInteract)
         {
             if (movement.grounded || movement.moveDirection.y < 0)
                 canInteract = true;
         }
-        else if ((int)status >= 6)
-            canInteract = false;
     }
 
     void UpdateMovingStatus()
     {
-        if ((int)status <= 1)
+        if (status == Status.sprinting && stamina > 0)
+            stamina -= Time.deltaTime;
+        else if (stamina < sprintTime)
+            stamina += Time.deltaTime;
+
+        if ((int)status <= 1 || isSprinting())
         {
-            status = Status.idle;
             if (playerInput.input.magnitude > 0.02f)
-                status = Status.moving;
+                ChangeStatus((shouldSprint()) ? Status.sprinting : Status.walking);
+            else
+                ChangeStatus(Status.idle);
         }
+    }
+
+    public bool shouldSprint()
+    {
+        bool sprint = false;
+        sprint = (playerInput.run && playerInput.input.y > 0);
+        if (status != Status.sliding)
+        {
+            if (!isSprinting()) //If we want to sprint
+            {
+                if (forceSprintReserve && stamina < sprintReserve)
+                    return false;
+                else if (!forceSprintReserve && stamina < sprintMinimum)
+                    return false;
+            }
+            if (stamina <= 0)
+            {
+                forceSprintReserve = true;
+                return false;
+            }
+        }
+        if (sprint)
+            forceSprintReserve = false;
+        return sprint;
     }
 
     void UpdateLean()
@@ -107,12 +174,30 @@ public class PlayerController : MonoBehaviour
         if (animateLean == null) return;
         Vector2 lean = Vector2.zero;
         if (status == Status.wallRunning)
-            lean.x = wallDir;
-        if (status == Status.sliding && controlledSlide)
+            lean.x = getWallrunDir();
+        if (status == Status.sliding)
             lean.y = -1;
-        else if (status == Status.grabbedLedge || status == Status.vaulting)
+        else if (status == Status.climbingLedge || status == Status.vaulting)
             lean.y = 1;
         animateLean.SetLean(lean);
+    }
+
+    void UpdateCamLevel()
+    {
+        if (animateCamLevel == null) return;
+
+        float level = 0f;
+        if(status == Status.crouching || status == Status.sliding || status == Status.vaulting || status == Status.climbingLedge || status == Status.underwaterSwimming)
+            level = crouchCamAdjust;
+        animateCamLevel.UpdateLevel(level);
+    }
+
+    int getWallrunDir()
+    {
+        int wallDir = 0;
+        if (wallrun != null)
+            wallDir = wallrun.getWallDir();
+        return wallDir;
     }
     /*********************************************************************/
 
@@ -120,382 +205,144 @@ public class PlayerController : MonoBehaviour
     /******************************** MOVE *******************************/
     void FixedUpdate()
     {
-        switch (status)
+        foreach (MovementType moveType in movements)
         {
-            case Status.sliding:
-                SlideMovement();
-                break;
-            case Status.climbingLadder:
-                LadderMovement();
-                break;
-            case Status.grabbedLedge:
-                GrabbedLedgeMovement();
-                break;
-            case Status.climbingLedge:
-                ClimbLedgeMovement();
-                break;
-            case Status.wallRunning:
-                WallrunningMovement();
-                break;
-            case Status.vaulting:
-                VaultMovement();
-                break;
-            default:
-                DefaultMovement();
-                break;
+            if (status == moveType.changeTo)
+            {
+                moveType.Movement();
+                return;
+            }
         }
+
+        DefaultMovement();
     }
 
     void DefaultMovement()
     {
-        if (playerInput.run && status == Status.crouching)
+        if (isSprinting() && isCrouching())
             Uncrouch();
 
-        movement.Move(playerInput.input, playerInput.run, (status == Status.crouching));
+        movement.Move(playerInput.input, isSprinting(), isCrouching());
         if (movement.grounded && playerInput.Jump())
         {
             if (status == Status.crouching)
-                Uncrouch();
+            {
+                if (!Uncrouch()) 
+                    return;
+            }
 
             movement.Jump(Vector3.up, 1f);
             playerInput.ResetJump();
         }
     }
-    /*********************************************************************/
 
-    /****************************** SLIDING ******************************/
-    void SlideMovement()
+    public bool isSprinting()
     {
-        if (movement.grounded && playerInput.Jump())
-        {
-            if (controlledSlide)
-                slideDir = transform.forward;
-            movement.Jump(slideDir + Vector3.up, 1f);
-            playerInput.ResetJump();
-            slideTime = 0;
-        }
-
-        movement.Move(slideDir, movement.slideSpeed, 1f);
-        if (slideTime <= 0)
-        {
-            if (playerInput.crouching)
-                Crouch();
-            else
-                Uncrouch();
-        }
+        return (status == Status.sprinting && movement.grounded);
     }
 
-    void CheckSliding()
+    public bool isWalking()
     {
-        //Check to slide when running
-        if(playerInput.crouch && canSlide())
-        {
-            slideDir = transform.forward;
-            movement.controller.height = halfheight;
-            controlledSlide = true;
-            slideTime = 1f;
-        }
-
-        //Lower slidetime
-        if (slideTime > 0)
-        {
-            status = Status.sliding;
-            slideTime -= Time.deltaTime;
-        }
-
-        if (Physics.Raycast(transform.position, -Vector3.up, out var hit, rayDistance))
-        {
-            float angle = Vector3.Angle(hit.normal, Vector3.up);
-            if (angle > slideLimit && movement.moveDirection.y < 0)
-            {
-                Vector3 hitNormal = hit.normal;
-                slideDir = new Vector3(hitNormal.x, -hitNormal.y, hitNormal.z);
-                Vector3.OrthoNormalize(ref hitNormal, ref slideDir);
-                controlledSlide = false;
-                status = Status.sliding;
-            }
-        }
+        if (status == Status.walking || status == Status.crouching)
+            return (movement.controller.velocity.magnitude > 0f && movement.grounded);
+        else
+            return false;
     }
-
-    bool canSlide()
+    public bool isCrouching()
     {
-        if (!movement.grounded) return false;
-        if (playerInput.input.magnitude <= 0.02f || !playerInput.run) return false;
-        if (slideTime > 0 || status == Status.sliding) return false;
-        return true;
+        return (status == Status.crouching);
     }
-    /*********************************************************************/
-
-    /***************************** CROUCHING *****************************/
+   
     void CheckCrouching()
     {
         if (!movement.grounded || (int)status > 2) return;
 
-        if(playerInput.crouch)
+        if (playerInput.run)
+        {
+            Uncrouch();
+            return;
+        }
+
+        if (playerInput.crouch)
         {
             if (status != Status.crouching)
-                Crouch();
+                Crouch(true);
             else
                 Uncrouch();
         }
     }
 
-    void Crouch()
+    public void Crouch(bool setStatus)
     {
-        movement.controller.height = halfheight;
-        status = Status.crouching;
+        movement.controller.height = crouchHeight;
+        if(setStatus) ChangeStatus(Status.crouching);
     }
 
-    void Uncrouch()
+    public bool Uncrouch()
     {
-        movement.controller.height = height;
-        status = Status.moving;
-    }
-    /*********************************************************************/
-
-    /************************** LADDER CLIMBING **************************/
-    void LadderMovement()
-    {
-        Vector3 input = playerInput.input;
-        Vector3 move = Vector3.Cross(Vector3.up, ladderNormal).normalized;
-        move *= input.x;
-        move.y = input.y * movement.walkSpeed;
-
-        bool goToGround = false;
-        goToGround = (move.y < -0.02f && movement.grounded);
-
-        if (playerInput.Jump())
-        {
-            movement.Jump((-ladderNormal + Vector3.up * 2f).normalized, 1f);
-            playerInput.ResetJump();
-            status = Status.moving;
-        }
-
-        if (!hasObjectInfront(0.05f, ladderLayer) || goToGround)
-        {
-            status = Status.moving;
-            Vector3 pushUp = ladderNormal;
-            pushUp.y = 0.25f;
-
-            movement.ForceMove(pushUp, movement.walkSpeed, 0.25f, true);
-        }
-        else
-            movement.Move(move, 1f, 0f);
+        Vector3 bottom = transform.position - (Vector3.up * ((crouchHeight / 2) - info.radius));
+        bool isBlocked = Physics.SphereCast(bottom, info.radius, Vector3.up, out var hit, info.height - info.radius, collisionLayer);
+        if (isBlocked) return false; //If we have something above us, do nothing and return
+        movement.controller.height = info.height;
+        ChangeStatus(Status.walking);
+        return true;
     }
 
-    void CheckLadderClimbing()
+    public bool hasObjectInfront(float dis, LayerMask layer)
     {
-        if (!canInteract)
-            return;
-        //Check for ladder all across player (so they cannot use the side)
-        bool right = Physics.Raycast(transform.position + (transform.right * halfradius), transform.forward, radius + 0.125f, ladderLayer);
-        bool left = Physics.Raycast(transform.position - (transform.right * halfradius), transform.forward, radius + 0.125f, ladderLayer);
+        Vector3 top = transform.position + (transform.forward * 0.25f);
+        Vector3 bottom = top - (transform.up * info.halfheight);
 
-        if (Physics.Raycast(transform.position, transform.forward, out var hit, radius + 0.125f, ladderLayer) && right && left)
-        {
-            if (hit.normal != hit.transform.forward) return;
-
-            ladderNormal = -hit.normal;
-            if (hasObjectInfront(0.05f, ladderLayer) && playerInput.input.y > 0.02f)
-            {
-                canInteract = false;
-                status = Status.climbingLadder;
-            }
-        }
-    }
-    /*********************************************************************/
-
-    /**************************** WALLRUNNING ****************************/
-    void WallrunningMovement()
-    {
-        Vector3 input = playerInput.input;
-        float s = (input.y > 0) ? input.y : 0;
-
-        Vector3 move = wallNormal * s;
-
-        if (playerInput.Jump())
-        {
-            movement.Jump(((Vector3.up * (s + 0.5f)) + (wallNormal * 2f * s) + (transform.right * -wallDir * 1.25f)).normalized, s + 0.5f);
-            playerInput.ResetJump();
-            status = Status.moving;
-        }
-
-        if (!hasWallToSide(wallDir) || movement.grounded)
-            status = Status.moving;
-
-        movement.Move(move, movement.runSpeed, (1f - s) + (s / 4f));
+        return (Physics.CapsuleCastAll(top, bottom, 0.25f, transform.forward, dis, layer).Length >= 1);
     }
 
-    void CheckForWallrun()
-    {
-        if (!canInteract || movement.grounded || movement.moveDirection.y >= 0)
-            return;
-
-        int wall = 0;
-        if (hasWallToSide(1))
-            wall = 1;
-        else if (hasWallToSide(-1))
-            wall = -1;
-
-        if (wall == 0) return;
-
-        if(Physics.Raycast(transform.position + (transform.right * wall * radius), transform.right * wall, out var hit, halfradius, wallrunLayer))
-        {
-            wallDir = wall;
-            wallNormal = Vector3.Cross(hit.normal, Vector3.up) * -wallDir;
-            status = Status.wallRunning;
-        }
-    }
-
-    bool hasWallToSide(int dir)
+    public bool hasWallToSide(int dir, LayerMask layer)
     {
         //Check for ladder in front of player
         Vector3 top = transform.position + (transform.right * 0.25f * dir);
-        Vector3 bottom = top - (transform.up * radius);
-        top += (transform.up * radius);
+        Vector3 bottom = top - (transform.up * info.radius);
+        top += (transform.up * info.radius);
 
-        return (Physics.CapsuleCastAll(top, bottom, 0.25f, transform.right * dir, 0.05f, wallrunLayer).Length >= 1);
+        return (Physics.CapsuleCastAll(top, bottom, 0.25f, transform.right * dir, 0.05f, layer).Length >= 1);
     }
-    /*********************************************************************/
+}
 
-    /******************** LEDGE GRABBING AND CLIMBING ********************/
-    void GrabbedLedgeMovement()
+public class PlayerInfo
+{
+    public float rayDistance;
+    public float radius;
+    public float height;
+    public float halfradius;
+    public float halfheight;
+
+    public PlayerInfo(float r, float h)
     {
-        if (playerInput.Jump())
-        {
-            movement.Jump((Vector3.up - transform.forward).normalized, 1f);
-            playerInput.ResetJump();
-            status = Status.moving;
-        }
-
-        movement.Move(Vector3.zero, 0f, 0f); //Stay in place
+        radius = r; height = h;
+        halfradius = r / 2f; halfheight = h / 2f;
+        rayDistance =  halfheight + radius + .175f;
     }
+}
+public class IKData
+{
+    public Vector3 handPos;
+    public Vector3 handEulerAngles;
 
-    void ClimbLedgeMovement()
+    public Vector3 armElbowPos;
+    public Vector3 armLocalPos;
+
+    public IKData()
     {
-        Vector3 dir = pushFrom - transform.position;
-        Vector3 right = Vector3.Cross(Vector3.up, dir).normalized;
-        Vector3 move = Vector3.Cross(dir, right).normalized;
-
-        movement.Move(move, movement.walkSpeed, 0f);
-        if (new Vector2(dir.x, dir.z).magnitude < 0.125f)
-            status = Status.idle;
-    }
-
-    void CheckLedgeGrab()
-    {
-        //Check for ledge to grab onto 
-        Vector3 dir = transform.TransformDirection(new Vector3(0, -0.5f, 1).normalized);
-        Vector3 pos = transform.position + (Vector3.up * height / 3f) + (transform.forward * radius / 2f);
-        bool right = Physics.Raycast(pos + (transform.right * radius / 2f), dir, radius + 0.125f, ledgeLayer);
-        bool left = Physics.Raycast(pos - (transform.right * radius / 2f), dir, radius + 0.125f, ledgeLayer);
-
-        if (Physics.Raycast(pos, dir, out var hit, radius + 0.125f, ledgeLayer) && right && left)
-        {
-            Vector3 rotatePos = transform.InverseTransformPoint(hit.point);
-            rotatePos.x = 0; rotatePos.z = 1;
-            pushFrom = transform.position + transform.TransformDirection(rotatePos); //grab the position with local z = 1
-            rotatePos.z = radius * 2f;
-
-            Vector3 checkCollisions = transform.position + transform.TransformDirection(rotatePos); //grab it closer now
-
-            //Check if you would be able to stand on the ledge
-            if (!Physics.SphereCast(checkCollisions, radius, Vector3.up, out hit, height - radius))
-            {
-                canInteract = false;
-                status = Status.grabbedLedge;
-            }
-        }
+        handPos = Vector3.zero;
+        handEulerAngles = Vector3.zero;
+        armElbowPos = Vector3.zero;
+        armLocalPos = Vector3.zero;
     }
 
-    void UpdateLedgeGrabbing()
+    public TransformData HandData()
     {
-        if (movement.grounded || movement.moveDirection.y > 0)
-            canGrabLedge = true;
-
-        if (status != Status.climbingLedge)
-        {
-            if (canGrabLedge && !movement.grounded)
-            {
-                if (movement.moveDirection.y < 0)
-                    CheckLedgeGrab();
-            }
-
-            if (status == Status.grabbedLedge)
-            {
-                canGrabLedge = false;
-                Vector2 down = playerInput.down;
-                if (down.y == -1)
-                    status = Status.moving;
-                else if (down.y == 1)
-                    status = Status.climbingLedge;
-            }
-        }
-    }
-    /*********************************************************************/
-
-    /***************************** VAULTING ******************************/
-    void VaultMovement()
-    {
-        Vector3 dir = vaultOver - transform.position;
-        Vector3 localPos = vaultHelper.transform.InverseTransformPoint(transform.position);
-        Vector3 move = (vaultDir + (Vector3.up * -(localPos.z - radius) * height)).normalized;
-
-        if(localPos.z > halfheight)
-        {
-            movement.controller.height = height;
-            status = Status.moving;
-        }
-
-        movement.Move(move, movement.runSpeed, 0f);
-    }
-
-    void CheckForVault()
-    {
-        if (status == Status.vaulting) return;
-
-        float checkDis = 0.05f;
-        checkDis += (movement.controller.velocity.magnitude / 16f); //Check farther if moving faster
-        if(hasObjectInfront(checkDis, vaultLayer) && playerInput.Jump())
-        {
-            if (Physics.SphereCast(transform.position + (transform.forward * (radius - 0.25f)), 0.25f, transform.forward, out var sphereHit, checkDis, vaultLayer))
-            {
-                if (Physics.SphereCast(sphereHit.point + (Vector3.up * halfheight), radius, Vector3.down, out var hit, halfheight - radius, vaultLayer))
-                {
-                    //Check above the point to make sure the player can fit
-                    if (Physics.SphereCast(hit.point + (Vector3.up * radius), radius, Vector3.up, out var trash, height-radius))
-                        return; //If cannot fit the player then do not vault
-
-                    vaultOver = hit.point;
-                    vaultDir = transform.forward;
-                    SetVaultHelper();
-
-                    canInteract = false;
-                    status = Status.vaulting;
-                    movement.controller.height = radius;
-                }
-            }
-        }
-    }
-
-    void CreateVaultHelper()
-    {
-        vaultHelper = new GameObject();
-        vaultHelper.transform.name = "(IGNORE) Vault Helper";
-    }
-
-    void SetVaultHelper()
-    {
-        vaultHelper.transform.position = vaultOver;
-        vaultHelper.transform.rotation = Quaternion.LookRotation(vaultDir);
-    }
-    /*********************************************************************/
-
-    bool hasObjectInfront(float dis, LayerMask layer)
-    {
-        Vector3 top = transform.position + (transform.forward * 0.25f);
-        Vector3 bottom = top - (transform.up * halfheight);
-
-        return (Physics.CapsuleCastAll(top, bottom, 0.25f, transform.forward, dis, layer).Length >= 1);
+        TransformData data = new TransformData();
+        data.position = handPos;
+        data.eulerAngles = handEulerAngles;
+        return data;
     }
 }

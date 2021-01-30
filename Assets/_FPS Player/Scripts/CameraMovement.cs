@@ -32,9 +32,8 @@ public class CameraMovement : MonoBehaviour
 
     void Update()
     {
-        // Ensure the cursor is always locked when set
+        Cursor.visible = false;
         Cursor.lockState = CursorLockMode.Locked;
-
         // Allow the script to clamp based on a desired target value.
         var targetOrientation = Quaternion.Euler(targetDirection);
         var targetCharacterOrientation = Quaternion.Euler(targetCharacterDirection);
@@ -50,7 +49,6 @@ public class CameraMovement : MonoBehaviour
 
         // Find the absolute mouse movement value from point zero.
         _mouseAbsolute += _smoothMouse;
-
         // Clamp and apply the local x value first, so as not to be affected by world transforms.
         if (clampInDegrees.x < 360)
             _mouseAbsolute.x = Mathf.Clamp(_mouseAbsolute.x, -clampInDegrees.x * 0.5f, clampInDegrees.x * 0.5f);
@@ -71,6 +69,21 @@ public class CameraMovement : MonoBehaviour
         {
             var yRotation = Quaternion.AngleAxis(_mouseAbsolute.x, transform.InverseTransformDirection(Vector3.up));
             transform.localRotation *= yRotation;
+        }
+    }
+
+    public void AddRecoil(Vector3 recoil, float time)
+    {
+        float recoilElapsed = 0;
+        StartCoroutine(recoilIncrease());
+        IEnumerator recoilIncrease()
+        {
+            while (recoilElapsed < time)
+            {
+                recoilElapsed += Time.deltaTime;
+                _mouseAbsolute += (Vector2)(recoil * Time.deltaTime / time);
+                yield return null;
+            }
         }
     }
 }
