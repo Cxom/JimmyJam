@@ -10,10 +10,16 @@ public class InteractController : MonoBehaviour
     
     private Interactable heldItem = null;
     private Interactable highlighted = null;
-    
-    void Start()
+
+    private static InteractController Inst;
+    public static InteractController Instance()
     {
-        
+        return Inst;
+    }
+    
+    void Awake()
+    {
+        Inst = this;
     }
 
     void Update()
@@ -103,7 +109,20 @@ public class InteractController : MonoBehaviour
         highlighted = null;
     }
 
-    private void DropItem()
+    
+
+    private void PickUpItem(Interactable interactable)
+    {
+        heldItem = interactable;
+        ClearHighlighted();
+        interactable.Rigidbody.isKinematic = true;
+        interactable.transform.SetParent(playerHand);
+        interactable.transform.localPosition = interactable.offset;
+        interactable.transform.localRotation = Quaternion.Euler(interactable.rotation);
+        interactable.transform.localScale = interactable.scale;
+    }
+
+    internal void DropItem()
     {
         heldItem.transform.SetParent(droppedItemsParent);
         heldItem.Rigidbody.isKinematic = false;
@@ -111,14 +130,10 @@ public class InteractController : MonoBehaviour
         heldItem.Toss(playerHand);
         heldItem = null;
     }
-
-    private void PickUpItem(Interactable interactable)
+    
+    internal void DeleteItem()
     {
-        heldItem = interactable;
-        interactable.Rigidbody.isKinematic = true;
-        interactable.transform.SetParent(playerHand);
-        interactable.transform.localPosition = interactable.offset;
-        interactable.transform.localRotation = Quaternion.Euler(interactable.rotation);
-        interactable.transform.localScale = interactable.scale;
+        Destroy(heldItem.gameObject);
+        heldItem = null;
     }
 }
