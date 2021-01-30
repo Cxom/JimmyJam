@@ -1191,11 +1191,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 64066893}
   m_Enabled: 0
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  color: 0
-  eraseRenderer: 0
+  outlineMode: 0
+  outlineColor: {r: 0.8962264, g: 0.114142045, b: 0.29296982, a: 1}
+  outlineWidth: 10
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!114 &64066895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1214,7 +1218,8 @@ MonoBehaviour:
   rotation: {x: 0, y: 90, z: -15}
   scale: {x: 0.38822, y: 0.38822, z: 0.38822}
   blowerDirection: {fileID: 734006816}
-  airVelocity: 10
+  airVelocity: 25
+  spawnRate: 0.05
   airParticles:
   - {fileID: 2368791462146772976, guid: 65861f3c3c1ae8a40b112065c7a9a025, type: 3}
 --- !u!198 &64066896
@@ -6053,39 +6058,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 7085721663646366572, guid: c2dc14f109b09a743b03757ef68006c7, type: 3}
   m_PrefabInstance: {fileID: 2061393452}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &207725055
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 207725054}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a78da3f00f3328541b4526c0b0b5ec5c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lineThickness: 3.3
-  lineIntensity: 4.34
-  fillAmount: 0.01
-  lineColor0: {r: 1, g: 0.13679248, b: 0.32224515, a: 1}
-  lineColor1: {r: 0, g: 1, b: 0, a: 1}
-  lineColor2: {r: 0, g: 0, b: 1, a: 1}
-  additiveRendering: 0
-  backfaceCulling: 1
-  fillColor: {r: 0, g: 0, b: 1, a: 1}
-  useFillColor: 0
-  cornerOutlines: 1
-  addLinesBetweenColors: 1
-  scaleWithScreenSize: 1
-  alphaCutoff: 0.5
-  flipY: 0
-  sourceCamera: {fileID: 2061393453}
-  autoEnableOutlines: 1
-  outlineCamera: {fileID: 0}
-  outlineShaderMaterial: {fileID: 0}
-  renderTexture: {fileID: 0}
-  extraRenderTexture: {fileID: 0}
 --- !u!114 &207725058
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6872,7 +6844,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 734006815}
-  m_LocalRotation: {x: 0.06606724, y: -0.7040136, z: -0.06606724, w: -0.7040136}
+  m_LocalRotation: {x: 0.70401376, y: 0.066065416, z: -0.70401376, w: 0.066065475}
   m_LocalPosition: {x: -3.4318926, y: 0.077, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -7384,20 +7356,6 @@ MonoBehaviour:
   offset: {x: 0, y: 0, z: 0}
   rotation: {x: 0, y: 0, z: 0}
   scale: {x: 1, y: 1, z: 1}
---- !u!114 &1130648548
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1130648543}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fbf3575480402db40813e763382412fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  color: 1
-  eraseRenderer: 0
 --- !u!64 &1130648549
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -7409,9 +7367,27 @@ MeshCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 4
-  m_Convex: 1
+  m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: -5495902117074765545, guid: 62f13b494521b674491bf4eb243be367, type: 3}
+--- !u!114 &1130648550
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1130648543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  outlineMode: 1
+  outlineColor: {r: 0.017065406, g: 1, b: 0, a: 1}
+  outlineWidth: 10
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1001 &1144127496
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7956,11 +7932,6 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c2dc14f109b09a743b03757ef68006c7, type: 3}
---- !u!20 &2061393453 stripped
-Camera:
-  m_CorrespondingSourceObject: {fileID: 7085721663646366574, guid: c2dc14f109b09a743b03757ef68006c7, type: 3}
-  m_PrefabInstance: {fileID: 2061393452}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2138114124
 GameObject:
   m_ObjectHideFlags: 0

@@ -8,10 +8,11 @@ public class LeafBlower : Interactable
 {
     [SerializeField] private Transform blowerDirection;
     [SerializeField] private float airVelocity;
+    [SerializeField] private float spawnRate = 0.2f;
     [SerializeField] private GameObject[] airParticles;
     
     private ParticleSystem _particleSystem;
-    private bool blowing;
+    private float timeToSpawn;
 
     private new void Start()
     {
@@ -23,18 +24,23 @@ public class LeafBlower : Interactable
 
     public override void PrimaryDown()
     {
-        blowing = true;
+        timeToSpawn = Time.time + spawnRate;
     }
 
     public override void PrimaryHold()
     {
-        GameObject airParticle = airParticles[Random.Range(0, airParticles.Length - 1)];
-        Instantiate(airParticle, blowerDirection.position, Random.rotationUniform);
-        airParticle.GetComponent<Rigidbody>().velocity = airVelocity * blowerDirection.forward;
+        if (Time.time > timeToSpawn)
+        {
+            GameObject airParticlePrefab = airParticles[Random.Range(0, airParticles.Length - 1)];
+            var airParticle = Instantiate(airParticlePrefab, blowerDirection.position, Random.rotationUniform);
+            airParticle.GetComponent<Rigidbody>().AddForce(airVelocity * blowerDirection.forward);
+            timeToSpawn += spawnRate;
+        }
     }
 
     public override void PrimaryUp()
     {
-        blowing = false;
+        
     }
+    
 }

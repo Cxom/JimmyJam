@@ -14,14 +14,14 @@ public abstract class Interactable : MonoBehaviour
 
     private Vector3 originalScale;
     public Rigidbody Rigidbody { get; protected set; }
-    public Outline outline { get; private set; }
+    public Outline Outline { get; private set; }
 
     protected void Start()
     {
         originalScale = transform.localScale;
         Rigidbody = GetComponent<Rigidbody>();
-        outline = GetComponent<Outline>();
-        outline.enabled = false;
+        Outline = GetComponent<Outline>();
+        Outline.enabled = false;
     }
 
     public virtual void PrimaryDown()

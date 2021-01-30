@@ -93,13 +93,13 @@ public class InteractController : MonoBehaviour
     private void SetHighlighted(Interactable interactable)
     {
         highlighted = interactable;
-        highlighted.outline.enabled = true;
+        highlighted.Outline.enabled = true;
     }
 
     private void ClearHighlighted()
     {
         if (!highlighted) { return; }
-        highlighted.outline.enabled = false;
+        highlighted.Outline.enabled = false;
         highlighted = null;
     }
 
