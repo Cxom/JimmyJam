@@ -1,9 +1,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class ElectricBox : MonoBehaviour
 {
+    [SerializeField] private Interactable laserPuzzle;
+    [SerializeField] private string laserPuzzleScene;
+    
+    [Header("")]
+    [SerializeField] private Fountain fountain;
+    
+    [Header("")]
     [SerializeField] GameObject lockKey;
     [SerializeField] GameObject lockLock;
     [SerializeField] private GameObject door;
@@ -43,6 +51,9 @@ public class ElectricBox : MonoBehaviour
             door.transform.RotateAround(hinge.position, hinge.up, rotPerSec * (Time.time - time));
             time = Time.time;   
         }
+        
+        // TODO scene transition
+        fountain.EnableElectricity();
     }
     
     public bool isLocked()

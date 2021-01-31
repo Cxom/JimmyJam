@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class WaterControlCabinet : MonoBehaviour
 {
+    [SerializeField] private Fountain fountain;
+    
+    [Header("")]
     [SerializeField] private Interactable allenKeySlot;
     [SerializeField] private GameObject door;
     [SerializeField] private Transform hinge;
@@ -49,6 +52,7 @@ public class WaterControlCabinet : MonoBehaviour
         // TODO Turn On
         Debug.Log("Water control cabinet turned on");
         allenKeyInSlot.SetActive(true);
+        // allenKeySlot.GetComponent<Interactable>().enabled = false;
         StartCoroutine(TurnOnAnimation());
     }
 
@@ -65,5 +69,6 @@ public class WaterControlCabinet : MonoBehaviour
         }
 
         on = true;
+        fountain.EnableWater();
     }
 }
