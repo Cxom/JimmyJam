@@ -73,6 +73,12 @@ public class LaserBeam : MonoBehaviour
         Gizmos.color = Color.yellow;
         Gizmos.DrawLine(startingPosition, position);
 
+        // hit a lightbox - Could be better to use object tags rather than string names.
+        if (hit.collider.tag == "LightBox")
+        {
+            return;
+        }
+
         DrawPredictedReflectionPattern(position, direction, reflectionsRemaining - 1);
     }
 

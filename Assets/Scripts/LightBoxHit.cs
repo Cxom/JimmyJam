@@ -22,12 +22,12 @@ public class LightBoxHit : MonoBehaviour
         if (hitterID == lightID && hit)
         {
             mgm.updateOn(lightID, true);
-            responseLight.GetComponent<Renderer>().material.color = Color.yellow;
+            responseLight.GetComponent<Renderer>().material.color = Color.green;
         }
         else
         {
             mgm.updateOn(lightID, false);
-            responseLight.GetComponent<Renderer>().material.color = Color.grey;
+            responseLight.GetComponent<Renderer>().material.color = Color.red;
         }
     }
 }
