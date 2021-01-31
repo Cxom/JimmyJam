@@ -5,23 +5,27 @@ using UnityEngine;
 
 public class LaserBeam : MonoBehaviour
 {
+    [SerializeField]
+    private MirrorGameManager mgm;
+
     public int maxReflectionCount = 5;
     public float maxStepDistance = 200;
 
     // ID used for detection with the light sensor
     public int laserID;
-    List<Color> laserColors = new List<Color>() { Color.red, Color.cyan, Color.green, Color.yellow, Color.white, Color.cyan };
 
     [SerializeField]
     private LineRenderer lineRenderer;
     [SerializeField]
     private MeshRenderer pointerHead;
+    [SerializeField]
+    private LightBoxHit target;
     private Color col; //Color of the laser based on the provided laserID
 
     private void Start()
     {
         // Get Laser color of this component, reflect these changes on the laster pointer head
-        col = laserColors[laserID];
+        col = mgm.laserColors[laserID];
         pointerHead.material.color = col;
     }
 
@@ -75,6 +79,8 @@ public class LaserBeam : MonoBehaviour
     private void FixedUpdate()
     {
         RaycastHit hit;
+        //Collider hitObj = null;
+        //bool hitSensor = false;
         int hits = 0;
         Vector3 direction = this.transform.up;
         Vector3 lastHitPosition = transform.position;
@@ -105,12 +111,26 @@ public class LaserBeam : MonoBehaviour
 
                 direction = Vector3.Reflect(direction, hit.normal);
                 lastHitPosition = hit.point;
+
+                // hit a lightbox - Could be better to use object tags rather than string names.
+                if (hit.collider.tag == "LightBox")
+                {
+                    hit.collider.gameObject.GetComponent<LightBoxHit>().FlipLight(laserID, true);
+                    lineRenderer.SetPosition(hits + 1, lineRenderer.GetPosition(hits));
+                    break;
+                }
+                else
+                {
+                    target.FlipLight(laserID, false);
+                }
             }
             else {
+                // Does not hit anything, restrict the max ray to reserve resources
                 lastHitPosition += direction * maxStepDistance;
                 break;
             }
         }
+        
         lineRenderer.SetPosition(hits + 1, lastHitPosition);
     }
 }
