@@ -16,10 +16,14 @@ public class InteractController : MonoBehaviour
     {
         return Inst;
     }
-    
+
+    private static LayerMask layerMask;
+    public static LayerMask LayerMask => layerMask;
+
     void Awake()
     {
         Inst = this;
+        layerMask = ~LayerMask.GetMask("Player", "InteractableIgnore");
     }
 
     void Update()
@@ -30,9 +34,8 @@ public class InteractController : MonoBehaviour
         }
 
         var interactedWithItem = heldItem;
-        if (!heldItem)
-        {
-            LayerMask layerMask = LayerMask.NameToLayer("Player");
+        // if (!heldItem)
+        // {
             Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
             if (Physics.Raycast(ray, out RaycastHit hit, reach, layerMask))
@@ -46,12 +49,16 @@ public class InteractController : MonoBehaviour
                         ClearHighlighted();
                         SetHighlighted(interactable);
                     }
-                    
+
                     if (Input.GetButtonDown("Use_Primary") && interactable.CanBePickedUp)
                     {
                         PickUpItem(interactable);
                     } 
-                    interactedWithItem = interactable;
+                    
+                    if (!heldItem)
+                    {
+                        interactedWithItem = interactable;
+                    }
                 }
                 else
                 {
@@ -62,7 +69,7 @@ public class InteractController : MonoBehaviour
             {
                 ClearHighlighted();
             }
-        }
+        // }
 
         if (interactedWithItem)
         {
@@ -113,6 +120,10 @@ public class InteractController : MonoBehaviour
 
     private void PickUpItem(Interactable interactable)
     {
+        if (heldItem)
+        {
+            DropItem();
+        }
         heldItem = interactable;
         ClearHighlighted();
         interactable.Rigidbody.isKinematic = true;

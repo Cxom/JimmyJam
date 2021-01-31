@@ -16,7 +16,7 @@ public class ElectricBox : MonoBehaviour
     
     internal void Unlock()
     {
-        // TODO Open door
+        // TODO Remove this log
         Debug.Log("Unlocked electric box!");
         lockKey.SetActive(true);
         locked = false;

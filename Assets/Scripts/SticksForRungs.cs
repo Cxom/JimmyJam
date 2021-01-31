@@ -9,10 +9,9 @@ public class SticksForRungs : Interactable
     
     public void Update()
     {
-        LayerMask layerMask = LayerMask.NameToLayer("Player");
         Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
-        if (Physics.Raycast(ray, out RaycastHit hit, 10, layerMask))
+        if (Physics.Raycast(ray, out RaycastHit hit, 10, InteractController.LayerMask))
         {
             Ladder ladder = hit.transform.GetComponentInParent<Ladder>();
             if (ladder && hit.distance <= ladder.activationRange && !ladder.HasRungs())
@@ -39,10 +38,9 @@ public class SticksForRungs : Interactable
 
     public override void PrimaryDown()
     {
-        LayerMask layerMask = LayerMask.NameToLayer("Player");
         Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
 
-        if (Physics.Raycast(ray, out RaycastHit hit, 10, layerMask))
+        if (Physics.Raycast(ray, out RaycastHit hit, 10, InteractController.LayerMask))
         {
             Ladder ladder = hit.transform.GetComponentInParent<Ladder>();
             if (ladder && hit.distance <= ladder.activationRange)

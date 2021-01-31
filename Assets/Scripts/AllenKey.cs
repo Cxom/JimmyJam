@@ -2,11 +2,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Key : Interactable
+public class AllenKey : Interactable
 {
-
-    [SerializeField] private ElectricBox electricBox;
-    [SerializeField] private Interactable boxLock;
+    [SerializeField] private WaterControlCabinet waterControlCabinet;
+    [SerializeField] private Interactable allenKeySlot;
 
     public override void PrimaryDown()
     {
@@ -14,9 +13,9 @@ public class Key : Interactable
 
         if (Physics.Raycast(ray, out RaycastHit hit, 10, InteractController.LayerMask))
         {
-            if (hit.transform.IsChildOf(boxLock.transform) && hit.distance <= boxLock.activationRange && electricBox.isLocked())
+            if (hit.transform.IsChildOf(allenKeySlot.transform) && hit.distance <= allenKeySlot.activationRange && !waterControlCabinet.isOn())
             {
-                electricBox.Unlock();
+                waterControlCabinet.TurnOn();
                 InteractController.Instance().DeleteItem();
             }
         }
