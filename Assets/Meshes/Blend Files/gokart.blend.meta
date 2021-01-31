@@ -1,38 +1,8 @@
 fileFormatVersion: 2
-guid: 25372e6a20e16ce41aed395792920b0d
+guid: 3c9d644aa57ff0643a900a8f80c6dcdf
 ModelImporter:
   serializedVersion: 20200
-  internalIDToNameTable:
-  - first:
-      74: -4560261932454369773
-    second: cowboy hat|0TPose
-  - first:
-      74: 1993651188665429537
-    second: cowboy hat|Action
-  - first:
-      74: 6825075302853467021
-    second: cowboy hat|Idle Hat
-  - first:
-      74: -4449717305648701825
-    second: Armature|0TPose
-  - first:
-      74: 885944232402757753
-    second: Armature|Action
-  - first:
-      74: -8945691123924629249
-    second: Armature|Idle
-  - first:
-      74: 8683955767769656052
-    second: Armature|Idle Hat
-  - first:
-      74: 8210526779120364742
-    second: Armature|kick
-  - first:
-      74: 8349542763059015795
-    second: Armature|Walk
-  - first:
-      74: 7771759744309623751
-    second: Armature|walk kick
+  internalIDToNameTable: []
   externalObjects: {}
   materials:
     materialImportMode: 2
